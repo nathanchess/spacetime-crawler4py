@@ -26,6 +26,12 @@ def is_valid(url):
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
 
+
+    # doku.php is a trap
+    # gitlab.ics.uci.edu
+    # */events/*
+    # grape.ics 
+
     traps = set()
 
     try:
