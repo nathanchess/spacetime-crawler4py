@@ -1,5 +1,6 @@
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlparse, RobotFileParser
+from bs4 import BeautifulSoup
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -16,21 +17,19 @@ def extract_next_links(url, resp):
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
 
-    print(url)
-    print(resp.raw_response.content)
+    valid_status_codes = set([200])
 
-    return list()
+    if resp.status in valid_status_codes:
+        return []
+
+    soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
+    links = soup.find_all('a')
+    return [link.get('href') for link in links]
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
-
-
-    # doku.php is a trap
-    # gitlab.ics.uci.edu
-    # */events/*
-    # grape.ics 
 
     traps = set()
 
