@@ -1,5 +1,5 @@
 import re
-from urllib.parse import urlparse, RobotFileParser, urldefrag
+from urllib.parse import urlparse, RobotFileParser, urldefrag, urljoin
 import urllib.robotparser
 from bs4 import BeautifulSoup
 from collections import defaultdict
@@ -35,14 +35,18 @@ stopWords = {
 }
 
 def scraper(url, resp):
-    if not is_valid(url):
+    global longestPage, longestPageCnt
+
+    # TODO: Add other codes that are valid
+    if not is_valid(url) or resp.status != 200 or not resp.raw_response:
         return []
 
     print("url: ", url)
     
     # open html file and lowercase the words and split in array
-    resp = BeautifulSoup(resp.raw_response.content, 'html.parser')
-    text = resp.get_text().lower().split(" ")
+    soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
+    # TODO: are we allowed to use regex or tokenizer?
+    text = soup.get_text().lower().split(" ")
     
     # getting frequency of words, exluding stop words
     for word in text:
@@ -61,13 +65,9 @@ def scraper(url, resp):
     # finding subdomains
     parsed = urlparse(url)
     subdomain = parsed.netloc
-    subDomainFreq[subdomain].add(urldefrag(url))
+    subDomainFreq[subdomain].add(clean_url)
 
-    
-
-
-
-    
+    # extract links
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
 
@@ -85,13 +85,24 @@ def extract_next_links(url, resp):
 
     valid_status_codes = set([200])
 
-    if resp.status not in valid_status_codes:
+    # TODO: change to valid_status_codes
+    if resp.status != 200 or not resp.raw_response:
         return []
 
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
-    links = soup.find_all('a')
+    links = []
+
+    for tag in soup.find_all("a", href=True):
+        href = tag.get("href")
+        absolute = urljoin(url, href)
+        clean, _ = urldefrag(absolute)
+        links.append(clean)
+
+    return links
 
 
+# TODO: check the politeness to make sure we are following it
+'''
     valid_next_links = []
 
     for link in links:
@@ -104,6 +115,7 @@ def extract_next_links(url, resp):
             
     return valid_next_links
     #return [link.get('href') for link in links]
+'''
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
@@ -114,17 +126,22 @@ def is_valid(url):
     # gitlab.ics.uci.edu
     # */events/*
     # grape.ics 
-
     traps = set()
 
     try:
         parsed = urlparse(url)
-        if parsed.scheme not in set(["http", "https"]):
+        if parsed.scheme not in {"http", "https"}:
             return False
-        if parsed.netloc not in set(["ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"]):
+        if not (parsed.netloc.endswith("ics.uci.edu") 
+                or parsed.netloc.endswith("cs.uci.edu") 
+                or parsed.netloc.endswith("informatics.uci.edu") 
+                or parsed.netloc.endswith("stat.uci.edu")):
             return False
+        # TODO: make sure we fix this to account for the traps (calendar, events, etc) **see above
         if url in traps:
             return False
+        
+
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
