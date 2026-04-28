@@ -1,5 +1,5 @@
 import re
-from urllib.parse import urlparse, RobotFileParser, urldefrag, urljoin
+from urllib.parse import urlparse, urldefrag, urljoin
 import urllib.robotparser
 from bs4 import BeautifulSoup
 from collections import defaultdict
