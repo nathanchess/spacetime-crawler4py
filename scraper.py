@@ -40,6 +40,39 @@ url:  http://www.ics.uci.edu/~dvk/pub/SIGMOD09_dvk.html
 url:  http://www.ics.uci.edu/~dvk/pub/C16_SIGMOD14_Jeffrey.ppsx
 Some characters could not be decoded, and were replaced with REPLACEMENT CHARACTER.
 
+026-04-28 21:21:20,594 - Worker-0 - INFO - Downloaded https://www.ics.uci.edu/~dsm/dyn/release/files/zImage_paapi, status <200>, using cache ('styx.ics.uci.edu', 9004).
+Some characters could not be decoded, and were replaced with REPLACEMENT CHARACTER.
+Some characters could not be decoded, and were replaced with REPLACEMENT CHARACTER.
+
+2026-04-28 21:21:41,847 - Worker-0 - INFO - Downloaded http://dynamo.ics.uci.edu/changelog.txt, status <200>, using cache ('styx.ics.uci.edu', 9004).
+2026-04-28 21:21:42,361 - Worker-0 - INFO - Downloaded http://dynamo.ics.uci.edu/files/zImage_paapi, status <200>, using cache ('styx.ics.uci.edu', 9004).
+Some characters could not be decoded, and were replaced with REPLACEMENT CHARACTER.
+Some characters could not be decoded, and were replaced with REPLACEMENT CHARACTER.
+
+2026-04-28 21:23:01,393 - Worker-0 - INFO - Downloaded http://www.ics.uci.edu/~shantas/publications/20-secret-sharing-aggregation-TKDE-shantanu, status <200>, using cache ('styx.ics.uci.edu', 9004).
+Some characters could not be decoded, and were replaced with REPLACEMENT CHARACTER.
+
+2026-04-28 21:29:16,647 - Worker-0 - INFO - Downloaded https://ics.uci.edu/~dechter/publications/r48a.html, stat
+
+2026-04-28 21:30:39,038 - Worker-0 - INFO - Downloaded https://ics.uci.edu/~dechter/r47.html, status <404>, using cache ('styx.ics.uci.edu', 9004).
+2026-04-28 21:30:39,548 - Worker-0 - INFO - Downloaded https://ics.uci.edu/~dechter/r48a.html, status <404>, using cache ('styx.ics.uci.edu', 9004).
+2026-04-28 21:30:40,057 - Worker-0 - INFO - Downloaded https://ics.uci.edu/~dechter/r48.html, status <404>, using cache ('styx.ics.uci.edu', 9004).
+2026-04-28 21:30:40,566 - Worker-0 - INFO - Downloaded https://ics.uci.edu/~dechter/r49a.html, status <404>, using cache ('styx.ics.uci.edu', 9004).
+2026-04-28 21:30:41,074 - Worker-0 - INFO - Downloaded https://ics.uci.edu/~dechter/r49.html, status <404>,
+
+
+2026-04-28 21:32:35,453 - Worker-0 - INFO - Downloaded https://www.ics.uci.edu/~dechter/acp_award.html, status <200>, using cache ('styx.ics.uci.edu', 9004).
+2026-04-28 21:32:35,995 - Worker-0 - INFO - Downloaded https://www.ics.uci.edu/~dechter/talks.html, status <200>, using cache ('styx.ics.uci.edu', 9004).
+2026-04-28 21:32:36,607 - Worker-0 - INFO - Downloaded https://www.ics.uci.edu/~dechter/talks/DeepLearn17-Outline, status <200>, using cache ('styx.ics.uci.edu', 9004).
+Some characters could not be decoded, and were replaced with REPLACEMENT CHARACTER.
+Some characters could not be decoded, and were replaced with REPLACEMENT CHARACTER.
+
+2026-04-28 21:35:59,681 - Worker-0 - INFO - Downloaded http://www.ics.uci.edu/~darkhipo, status <200>, using cache ('styx.ics.uci.edu', 9004).
+2026-04-28 21:36:00,203 - Worker-0 - INFO - Downloaded http://www.ics.uci.edu/~rasadi, status <500>, using cache ('styx.ics.uci.edu', 9004).
+
+2026-04-28 21:36:15,418 - Worker-0 - INFO - Downloaded https://ics.uci.edu/people/shuang-zhao, status <608>, using cache ('styx.ics.uci.edu', 9004).
+2026-04-28 21:36:15,927 - Worker-0 - INFO - Downloaded https://ics.uci.edu/people/erik-sudderth, status <608>, using cache ('styx.ics.uci.edu', 9004).
+2026-04-28 21:36:16,435 - Worker-0 - INFO - Downloaded https://ics.uci.edu/people/gopi-meenakshisundaram, status <608>, using cache ('styx.ics.uci.edu', 9004).
 """
 
 valid_domains = ["ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"]
