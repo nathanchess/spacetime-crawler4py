@@ -4,8 +4,6 @@ import urllib.robotparser
 from bs4 import BeautifulSoup
 from collections import defaultdict
 
-
-
 freqWords = dict()
 longestPageCnt, longestPage = 0, None
 UniquePages = set()
@@ -34,20 +32,43 @@ stopWords = {
     "your", "yours", "yourself", "yourselves"
 }
 
+valid_domains = ["ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"]
+
+MIN_CONTENT_BYTES = 500
+MAX_CONTENT_BYTES = 10 * 1024 * 1024
+MIN_WORD_COUNT = 50
+
 def scraper(url, resp):
+
     global longestPage, longestPageCnt
 
     # TODO: Add other codes that are valid
     if not is_valid(url) or resp.status != 200 or not resp.raw_response:
         return []
 
+    content = resp.raw_response.content
+    if not content or len(content) < MIN_CONTENT_BYTES:
+        return []
+    
+    if len(content) > MAX_CONTENT_BYTES:
+        return []
+
     print("url: ", url)
     
     # open html file and lowercase the words and split in array
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
-    # TODO: are we allowed to use regex or tokenizer?
-    text = soup.get_text().lower().split(" ")
     
+    # MAYBE: Remove non-text HTML Tags
+    for tag in soup(['script', 'noscript', 'style']):
+        tag.decompose()
+
+    # TODO: are we allowed to use regex or tokenizer?
+    page_text = soup.get_text(separator=" ").lower()
+    text = re.findall(r"\b[a-z0-9]+(?:'[a-z]+)?\b", page_text)
+            
+    if len(text) < MIN_WORD_COUNT:
+        return []
+
     # getting frequency of words, exluding stop words
     for word in text:
         if word not in stopWords:
@@ -94,28 +115,13 @@ def extract_next_links(url, resp):
 
     for tag in soup.find_all("a", href=True):
         href = tag.get("href")
+        if not href or href.startswith(('javascript:', 'mailto:', '#', 'tel:')):
+            continue
         absolute = urljoin(url, href)
         clean, _ = urldefrag(absolute)
         links.append(clean)
 
     return links
-
-
-# TODO: check the politeness to make sure we are following it
-'''
-    valid_next_links = []
-
-    for link in links:
-        parsed = urlparse(link)
-        rp = urllib.robotparser.RobotFileParser()
-        rp.set_url(f"{parsed.scheme}://{parsed.netloc}/robots.txt" )
-        rp.read()
-        if rp.can_fetch("*", link):
-            valid_next_links.append(link.get('href'))
-            
-    return valid_next_links
-    #return [link.get('href') for link in links]
-'''
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
@@ -126,22 +132,30 @@ def is_valid(url):
     # gitlab.ics.uci.edu
     # */events/*
     # grape.ics 
-    traps = set()
+
+    global valid_domains
+    
+    traps = {"calendar", "events", "doku.php"}
 
     try:
         parsed = urlparse(url)
         if parsed.scheme not in {"http", "https"}:
             return False
-        if not (parsed.netloc.endswith("ics.uci.edu") 
-                or parsed.netloc.endswith("cs.uci.edu") 
-                or parsed.netloc.endswith("informatics.uci.edu") 
-                or parsed.netloc.endswith("stat.uci.edu")):
-            return False
-        # TODO: make sure we fix this to account for the traps (calendar, events, etc) **see above
-        if url in traps:
+        
+        netloc = parsed.netloc
+
+        if not any(netloc == domain or netloc.endswith("." + domain) for domain in valid_domains):
             return False
         
-
+        if re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$", parsed.path):
+            return False
+        
+        path_lower = parsed.path.lower()
+        query_lower = parsed.query.lower() # its there
+        for invalid in traps:
+            if invalid in path_lower or invalid in query_lower:
+                return False
+        
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
