@@ -133,6 +133,8 @@ def is_valid(url):
     # */events/*
     # grape.ics 
 
+    #TODO: status code errors
+
     global valid_domains
     
     traps = {"calendar", "events", "doku.php"}
