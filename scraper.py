@@ -32,6 +32,16 @@ stopWords = {
     "your", "yours", "yourself", "yourselves"
 }
 
+"""
+TRAPS FOUND:
+
+url:  http://www.ics.uci.edu/~dvk/pub/SIGMOD09_dvk.html
+2026-04-28 19:52:32,489 - Worker-0 - INFO - Downloaded http://www.ics.uci.edu/~dvk/pub/C16_SIGMOD14_Jeffrey.ppsx, status <200>, using cache ('styx.ics.uci.edu', 9004).
+url:  http://www.ics.uci.edu/~dvk/pub/C16_SIGMOD14_Jeffrey.ppsx
+Some characters could not be decoded, and were replaced with REPLACEMENT CHARACTER.
+
+"""
+
 valid_domains = ["ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"]
 
 MIN_CONTENT_BYTES = 500
@@ -149,6 +159,9 @@ def is_valid(url):
         if not any(netloc == domain or netloc.endswith("." + domain) for domain in valid_domains):
             return False
         
+        if "gitlab" in netloc or "grape" in netloc:
+            return False
+        
         if re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$", parsed.path):
             return False
         
@@ -162,7 +175,7 @@ def is_valid(url):
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
             + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
-            + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
+            + r"|ps|eps|tex|ppt|pptx|pps|ppsx|doc|docx|xls|xlsx|names"
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
