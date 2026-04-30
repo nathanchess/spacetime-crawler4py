@@ -217,3 +217,22 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
+
+def print_results():
+    print("50 MOST FREQUENT WORDS ---------------------------------------------------")
+    for key, value in freqWords.items():
+        print(f"{key} : {value}")
+    print()
+    print("LONGEST PAGE COUNT -------------------------------------------------")
+    print("LongestPageCnt: ", longestPageCnt)
+    print()
+    print("LONGEST PAGE ----------------------------------------------------")
+    print("LongestPage: ", longestPage)
+    print()
+    print("NUMBER OF UNIQUE PAGES ---------------------------------------------------------------")
+    print(len(UniquePages))
+    print()
+    print("SUB DOMAIN FREQUNCIES -------------------------------------------------------------")
+    for key in sorted(subDomainFreq.keys()):
+        print(f"{key}: {len(subDomainFreq[key])}")
