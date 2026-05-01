@@ -127,6 +127,10 @@ def scraper(url, resp):
     
     # open html file and lowercase the words and split in array
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
+
+    # Extracting links first before quality gates
+    raw_links = extract_next_links(url, resp)
+    valid_links = [link for link in raw_links if is_valid(link)]
     
     # MAYBE: Remove non-text HTML Tags
     for tag in soup(['script', 'noscript', 'style']):
@@ -143,23 +147,15 @@ def scraper(url, resp):
     if not filtered_text or len(filtered_text) < MIN_WORD_COUNT:
         print("Text: ", text)
         print("Word count is too low: ", url)
-        return []
+        return valid_links
 
     unique_words = len(set(filtered_text))
     unique_words_ratio = unique_words / total_words
 
     if unique_words_ratio < MIN_UNIQUE_WORDS_RATIO:
         print("Unique words ratio is too low: ", url)
-        return []
-
-    # Add unique pages and subdomain.
-    clean_url, _ = urldefrag(url)
-    UniquePages.add(clean_url)
-
-    # finding subdomains
-    parsed = urlparse(url)
-    subdomain = parsed.netloc
-    subDomainFreq[subdomain].add(clean_url)    
+        return valid_links
+   
 
     # De-duplication
     current_fingerprint = generate_fingerprint(filtered_text)
@@ -179,25 +175,36 @@ def scraper(url, resp):
 
     if is_duplicate:
         print("Near-duplicate found, skipping URL: ", url)
-        return []
+        return valid_links
 
     FINGERPRINT_STORE.add(current_fingerprint)
 
-    print("Successfully processed URL: ", url)
+    # Add unique pages and subdomain.
+    clean_url, _ = urldefrag(url)
+    UniquePages.add(clean_url)
+
+    # finding subdomains
+    parsed = urlparse(url)
+    subdomain = parsed.netloc
+    subDomainFreq[subdomain].add(clean_url) 
+
 
     # Get frequency of words
     for word in filtered_text:
         freqWords[word] = freqWords.get(word,0) + 1
     
     # finding longest page
-    if len(text) > longestPageCnt:
+    if len(filtered_text) > longestPageCnt:
         longestPage = url
-        longestPageCnt = len(text)
+        longestPageCnt = len(filtered_text)
+
+    print("Successfully processed URL: ", url)
+    return valid_links
 
     # extract links
-    links = extract_next_links(url, resp)
+    #links = extract_next_links(url, resp)
 
-    return [link for link in links if is_valid(link)]
+    #return [link for link in links if is_valid(link)]
 
 def extract_next_links(url, resp):
     # Implementation required.
@@ -237,7 +244,6 @@ def is_valid(url):
 
     global valid_domains
     
-    traps = {"calendar", "events", "doku.php"}
 
     try:
         parsed = urlparse(url)
@@ -252,14 +258,19 @@ def is_valid(url):
         # if "gitlab" in netloc or "grape" in netloc:
         #    return False
         
-        if re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$", parsed.path):
+        segments = [s for s in parsed.path.split("/") if s]
+        if any(segments.count(s) >= 3 for s in set(segments)):
             return False
         
-        path_lower = parsed.path.lower()
-        query_lower = parsed.query.lower() # its there
-        for invalid in traps:
-            if invalid in path_lower or invalid in query_lower:
-                return False
+        path_segments_lower = [p.lower() for p in segments]
+        path_trap_segments = {"events", "calendar"}
+        if any(seg in path_trap_segments for seg in path_segments_lower):
+            return False
+        
+        # doku.php is a specific filename, checking directly in path
+        if "doku.php" in parsed.path.lower():
+            return False
+
         
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
