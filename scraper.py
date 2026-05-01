@@ -237,7 +237,7 @@ def is_valid(url):
 
     global valid_domains
     
-    traps = {"calendar", "events"}
+    traps = {"calendar", "events", "doku.php"}
 
     try:
         parsed = urlparse(url)
