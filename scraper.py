@@ -81,22 +81,41 @@ MIN_CONTENT_BYTES = 500
 MAX_CONTENT_BYTES = 10 * 1024 * 1024
 MIN_WORD_COUNT = 50
 
+FINGERPRINTS_STORE = []
+VALID_STATUS_CODES = set([200])
+
+def generate_fingerprint(text, gram_count=3):
+    selected_hashes = set()
+    for i in range(len(text) - gram_count + 1):
+        gram = text[i:i+gram_count]
+        gram_hash = hash(gram)
+        if gram_hash % 4 == 0:
+            selected_hashes.add(gram_hash)
+    return selected_hashes
+
 def scraper(url, resp):
 
     global longestPage, longestPageCnt
 
+    print("Processing URL: ", url)
+    print("Status: ", resp.status)
+    print("Error: ", resp.error)
+    print("Content Length: ", len(resp.raw_response.content))
+
     # TODO: Add other codes that are valid
-    if not is_valid(url) or resp.status != 200 or not resp.raw_response:
+    if not is_valid(url) or resp.status not in VALID_STATUS_CODES or not resp.raw_response:
+        print("Invalid URL: ", url)
         return []
 
     content = resp.raw_response.content
+
     if not content or len(content) < MIN_CONTENT_BYTES:
+        print("Content length is too short: ", url)
         return []
     
     if len(content) > MAX_CONTENT_BYTES:
+        print("Content length is too long: ", url)
         return []
-
-    print("url: ", url)
     
     # open html file and lowercase the words and split in array
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
@@ -110,8 +129,10 @@ def scraper(url, resp):
     text = re.findall(r"\b[a-z0-9]+(?:'[a-z]+)?\b", page_text)
             
     if len(text) < MIN_WORD_COUNT:
+        print("Word count is too low: ", url)
         return []
 
+    print("Successfully processed URL: ", url)
     # getting frequency of words, exluding stop words
     for word in text:
         if word not in stopWords:
@@ -133,8 +154,8 @@ def scraper(url, resp):
 
     # extract links
     links = extract_next_links(url, resp)
-    return [link for link in links if is_valid(link)]
 
+    return [link for link in links if is_valid(link)]
 
 def extract_next_links(url, resp):
     # Implementation required.
@@ -146,12 +167,6 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-
-    valid_status_codes = set([200])
-
-    # TODO: change to valid_status_codes
-    if resp.status != 200 or not resp.raw_response:
-        return []
 
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
     links = []
@@ -221,7 +236,8 @@ def is_valid(url):
 
 def print_results():
     print("50 MOST FREQUENT WORDS ---------------------------------------------------")
-    for key, value in freqWords.items():
+    freqWords_sorted = sorted(freqWords.items(), key=lambda x: x[1], reverse=True)
+    for key, value in freqWords_sorted[:50]:
         print(f"{key} : {value}")
     print()
     print("LONGEST PAGE COUNT -------------------------------------------------")
@@ -235,4 +251,4 @@ def print_results():
     print()
     print("SUB DOMAIN FREQUNCIES -------------------------------------------------------------")
     for key in sorted(subDomainFreq.keys()):
-        print(f"{key}: {len(subDomainFreq[key])}")
+        print(f"{key}, {len(subDomainFreq[key])}")
