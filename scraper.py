@@ -126,8 +126,9 @@ def scraper(url, resp):
     # TODO: are we allowed to use regex or tokenizer?
     page_text = soup.get_text(separator=" ").lower()
     text = re.findall(r"\b[a-z0-9]+(?:'[a-z]+)?\b", page_text)
-            
+
     if len(text) < MIN_WORD_COUNT:
+        print("Text: ", text)
         print("Word count is too low: ", url)
         return []
 
