@@ -83,12 +83,24 @@ valid_domains = ["ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.e
 MIN_CONTENT_BYTES = 500
 MAX_CONTENT_BYTES = 10 * 1024 * 1024
 MIN_WORD_COUNT = 50
+MIN_UNIQUE_WORDS_RATIO = 0.05
+MIN_SIMILARITY_RATIO = 0.8
 
+VALID_STATUS_CODES = set([200])
+FINGERPRINT_STORE = set()
 
-VALID_STATUS_CODES = set([200, 603, 604, 605])
+def generate_fingerprint(text, gram_count=3):
+    selected_hashes = set()
 
-def generate_simhash(tokens, b=64):
-    pass
+    for i in range(len(text) - gram_count + 1):
+        gram = tuple(text[i:i+gram_count])
+        gram_hash = hash(gram)
+
+        # Select only 25% of hashes to save memory.
+        if gram_hash % 4 == 0:
+            selected_hashes.add(gram_hash)
+
+    return frozenset(selected_hashes)
 
 def scraper(url, resp):
 
@@ -120,16 +132,25 @@ def scraper(url, resp):
     for tag in soup(['script', 'noscript', 'style']):
         tag.decompose()
 
-    # TODO: are we allowed to use regex or tokenizer?
+    # Regex for words + contractions
     page_text = soup.get_text(separator=" ").lower()
-    text = re.findall(r"\b[a-z0-9]+(?:'[a-z]+)?\b", page_text)
+    text = re.findall(r"[a-z0-9]+(?:['_-][a-z0-9]+)*", page_text)
 
-    if len(text) < MIN_WORD_COUNT:
+    # getting frequency of words, exluding stop words
+    filtered_text = [word for word in text if len(word) > 2 and word not in stopWords]
+    total_words = len(filtered_text)
+
+    if not filtered_text or len(filtered_text) < MIN_WORD_COUNT:
         print("Text: ", text)
         print("Word count is too low: ", url)
         return []
 
-    print("Successfully processed URL: ", url)
+    unique_words = len(set(filtered_text))
+    unique_words_ratio = unique_words / total_words
+
+    if unique_words_ratio < MIN_UNIQUE_WORDS_RATIO:
+        print("Unique words ratio is too low: ", url)
+        return []
 
     # Add unique pages and subdomain.
     clean_url, _ = urldefrag(url)
@@ -138,15 +159,35 @@ def scraper(url, resp):
     # finding subdomains
     parsed = urlparse(url)
     subdomain = parsed.netloc
-    subDomainFreq[subdomain].add(clean_url)
+    subDomainFreq[subdomain].add(clean_url)    
 
     # De-duplication
-    
+    current_fingerprint = generate_fingerprint(filtered_text)
+    is_duplicate = False
 
-    # getting frequency of words, exluding stop words
-    for word in text:
-        if word not in stopWords:
-            freqWords[word] = freqWords.get(word,0) + 1
+    for stored_fingerprint in FINGERPRINT_STORE:
+        if len(current_fingerprint) == 0 or len(stored_fingerprint) == 0:
+            continue
+        
+        intersection_count = len(current_fingerprint.intersection(stored_fingerprint))
+        union_count = len(current_fingerprint.union(stored_fingerprint))
+
+        similarity_ratio = intersection_count / union_count
+        if similarity_ratio >= MIN_SIMILARITY_RATIO:
+            is_duplicate = True
+            break
+
+    if is_duplicate:
+        print("Near-duplicate found, skipping URL: ", url)
+        return []
+
+    FINGERPRINT_STORE.add(current_fingerprint)
+
+    print("Successfully processed URL: ", url)
+
+    # Get frequency of words
+    for word in filtered_text:
+        freqWords[word] = freqWords.get(word,0) + 1
     
     # finding longest page
     if len(text) > longestPageCnt:
