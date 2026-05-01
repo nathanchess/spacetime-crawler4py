@@ -60,7 +60,6 @@ Some characters could not be decoded, and were replaced with REPLACEMENT CHARACT
 2026-04-28 21:30:40,566 - Worker-0 - INFO - Downloaded https://ics.uci.edu/~dechter/r49a.html, status <404>, using cache ('styx.ics.uci.edu', 9004).
 2026-04-28 21:30:41,074 - Worker-0 - INFO - Downloaded https://ics.uci.edu/~dechter/r49.html, status <404>,
 
-
 2026-04-28 21:32:35,453 - Worker-0 - INFO - Downloaded https://www.ics.uci.edu/~dechter/acp_award.html, status <200>, using cache ('styx.ics.uci.edu', 9004).
 2026-04-28 21:32:35,995 - Worker-0 - INFO - Downloaded https://www.ics.uci.edu/~dechter/talks.html, status <200>, using cache ('styx.ics.uci.edu', 9004).
 2026-04-28 21:32:36,607 - Worker-0 - INFO - Downloaded https://www.ics.uci.edu/~dechter/talks/DeepLearn17-Outline, status <200>, using cache ('styx.ics.uci.edu', 9004).
@@ -73,6 +72,7 @@ Some characters could not be decoded, and were replaced with REPLACEMENT CHARACT
 2026-04-28 21:36:15,418 - Worker-0 - INFO - Downloaded https://ics.uci.edu/people/shuang-zhao, status <608>, using cache ('styx.ics.uci.edu', 9004).
 2026-04-28 21:36:15,927 - Worker-0 - INFO - Downloaded https://ics.uci.edu/people/erik-sudderth, status <608>, using cache ('styx.ics.uci.edu', 9004).
 2026-04-28 21:36:16,435 - Worker-0 - INFO - Downloaded https://ics.uci.edu/people/gopi-meenakshisundaram, status <608>, using cache ('styx.ics.uci.edu', 9004).
+
 """
 
 valid_domains = ["ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"]
@@ -82,7 +82,7 @@ MAX_CONTENT_BYTES = 10 * 1024 * 1024
 MIN_WORD_COUNT = 50
 
 FINGERPRINTS_STORE = []
-VALID_STATUS_CODES = set([200])
+VALID_STATUS_CODES = set([200, 603, 604, 605])
 
 def generate_fingerprint(text, gram_count=3):
     selected_hashes = set()
@@ -100,7 +100,6 @@ def scraper(url, resp):
     print("Processing URL: ", url)
     print("Status: ", resp.status)
     print("Error: ", resp.error)
-    print("Content Length: ", len(resp.raw_response.content))
 
     # TODO: Add other codes that are valid
     if not is_valid(url) or resp.status not in VALID_STATUS_CODES or not resp.raw_response:
@@ -133,6 +132,19 @@ def scraper(url, resp):
         return []
 
     print("Successfully processed URL: ", url)
+
+    # Add unique pages and subdomain.
+    clean_url, _ = urldefrag(url)
+    UniquePages.add(clean_url)
+
+    # finding subdomains
+    parsed = urlparse(url)
+    subdomain = parsed.netloc
+    subDomainFreq[subdomain].add(clean_url)
+
+    # De-duplication
+
+
     # getting frequency of words, exluding stop words
     for word in text:
         if word not in stopWords:
@@ -142,15 +154,6 @@ def scraper(url, resp):
     if len(text) > longestPageCnt:
         longestPage = url
         longestPageCnt = len(text)
-
-    # finding all unique pages
-    clean_url, _ = urldefrag(url)
-    UniquePages.add(clean_url)
-
-    # finding subdomains
-    parsed = urlparse(url)
-    subdomain = parsed.netloc
-    subDomainFreq[subdomain].add(clean_url)
 
     # extract links
     links = extract_next_links(url, resp)
