@@ -73,6 +73,9 @@ Some characters could not be decoded, and were replaced with REPLACEMENT CHARACT
 2026-04-28 21:36:15,927 - Worker-0 - INFO - Downloaded https://ics.uci.edu/people/erik-sudderth, status <608>, using cache ('styx.ics.uci.edu', 9004).
 2026-04-28 21:36:16,435 - Worker-0 - INFO - Downloaded https://ics.uci.edu/people/gopi-meenakshisundaram, status <608>, using cache ('styx.ics.uci.edu', 9004).
 
+2026-04-30 19:51:15,408 - Worker-0 - INFO - Downloaded https://www.ics.uci.edu/~dsm/dyn/release/files/zImage_paapi, status <200>, using cache ('styx.ics.uci.edu', 9011).
+Some characters could not be decoded, and were replaced with REPLACEMENT CHARACTER.
+
 """
 
 valid_domains = ["ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"]
@@ -81,17 +84,11 @@ MIN_CONTENT_BYTES = 500
 MAX_CONTENT_BYTES = 10 * 1024 * 1024
 MIN_WORD_COUNT = 50
 
-FINGERPRINTS_STORE = []
+
 VALID_STATUS_CODES = set([200, 603, 604, 605])
 
-def generate_fingerprint(text, gram_count=3):
-    selected_hashes = set()
-    for i in range(len(text) - gram_count + 1):
-        gram = text[i:i+gram_count]
-        gram_hash = hash(gram)
-        if gram_hash % 4 == 0:
-            selected_hashes.add(gram_hash)
-    return selected_hashes
+def generate_simhash(tokens, b=64):
+    pass
 
 def scraper(url, resp):
 
@@ -144,7 +141,7 @@ def scraper(url, resp):
     subDomainFreq[subdomain].add(clean_url)
 
     # De-duplication
-
+    
 
     # getting frequency of words, exluding stop words
     for word in text:
@@ -199,7 +196,7 @@ def is_valid(url):
 
     global valid_domains
     
-    traps = {"calendar", "events", "doku.php"}
+    traps = {"calendar", "events"}
 
     try:
         parsed = urlparse(url)
@@ -211,8 +208,8 @@ def is_valid(url):
         if not any(netloc == domain or netloc.endswith("." + domain) for domain in valid_domains):
             return False
         
-        if "gitlab" in netloc or "grape" in netloc:
-            return False
+        # if "gitlab" in netloc or "grape" in netloc:
+        #    return False
         
         if re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$", parsed.path):
             return False
