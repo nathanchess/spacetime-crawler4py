@@ -115,6 +115,15 @@ def scraper(url, resp):
         print("Invalid URL: ", url)
         return []
 
+    # Add unique pages and subdomain.
+    clean_url, _ = urldefrag(url)
+    UniquePages.add(clean_url)
+
+    # finding subdomains
+    parsed = urlparse(url)
+    subdomain = parsed.netloc
+    subDomainFreq[subdomain].add(clean_url)
+
     content = resp.raw_response.content
 
     if not content or len(content) < MIN_CONTENT_BYTES:
@@ -178,15 +187,7 @@ def scraper(url, resp):
         return valid_links
 
     FINGERPRINT_STORE.add(current_fingerprint)
-
-    # Add unique pages and subdomain.
-    clean_url, _ = urldefrag(url)
-    UniquePages.add(clean_url)
-
-    # finding subdomains
-    parsed = urlparse(url)
-    subdomain = parsed.netloc
-    subDomainFreq[subdomain].add(clean_url) 
+ 
 
 
     # Get frequency of words
