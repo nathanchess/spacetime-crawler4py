@@ -225,9 +225,13 @@ def extract_next_links(url, resp):
         href = tag.get("href")
         if not href or href.startswith(('javascript:', 'mailto:', '#', 'tel:')):
             continue
-        absolute = urljoin(url, href)
-        clean, _ = urldefrag(absolute)
-        links.append(clean)
+        try:
+            absolute = urljoin(url, href)
+            clean, _ = urldefrag(absolute)
+            links.append(clean)
+        except Exception as e:
+            print("Exception encountered for ", href, e)
+            continue
 
     return links
 
@@ -264,7 +268,7 @@ def is_valid(url):
             return False
         
         path_segments_lower = [p.lower() for p in segments]
-        path_trap_segments = {"events", "calendar"}
+        path_trap_segments = {"events", "calendar", "grape"}
         if any(seg in path_trap_segments for seg in path_segments_lower):
             return False
         
