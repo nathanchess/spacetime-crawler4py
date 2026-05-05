@@ -260,8 +260,8 @@ def is_valid(url):
         if not any(netloc == domain or netloc.endswith("." + domain) for domain in valid_domains):
             return False
         
-        # if "gitlab" in netloc or "grape" in netloc:
-        #    return False
+        if "gitlab" in netloc or "grape" in netloc:
+            return False
         
         segments = [s for s in parsed.path.split("/") if s]
         if any(segments.count(s) >= 3 for s in set(segments)):
